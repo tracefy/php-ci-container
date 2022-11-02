@@ -6,7 +6,7 @@ on:
 
 jobs:
   init:
-    runs-on: [ self-hosted ]
+    runs-on: [ ubuntu-latest ]
     outputs:
       branch: ${{ steps.vars.outputs.branch }}
       tag: ${{ steps.vars.outputs.tag }}
