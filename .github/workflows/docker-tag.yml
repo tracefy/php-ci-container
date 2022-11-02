@@ -45,7 +45,6 @@ jobs:
         if: ${{ inputs.tag == 'latest' }}
         run: |
           cp -r config ${{ inputs.distro }}/config
-          cp enable-xdebug.sh ${{ inputs.distro }}/enable-xdebug.sh
           cd ${{ inputs.distro }}
           docker build -t ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }} .
           docker push ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }}
