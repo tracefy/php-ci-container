@@ -1,0 +1,34 @@
+name: CI Test
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  clean:
+    uses: tracefy/github-actions-workflows/.github/workflows/utilities-clean.yml@v1
+
+  init:
+    needs:
+      - clean
+    runs-on: [ self-hosted ]
+    steps:
+      - uses: actions/checkout@v3
+
+  debian:
+    needs:
+      - init
+    uses: ./.github/workflows/docker-tag.yml
+    secrets: inherit
+    with:
+      tag: latest
+      distro: debian
+
+  alpine:
+    needs:
+      - init
+    uses: ./.github/workflows/docker-tag.yml
+    secrets: inherit
+    with:
+      tag: latest
+      distro: alpine

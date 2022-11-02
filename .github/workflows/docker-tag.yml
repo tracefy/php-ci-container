@@ -1,0 +1,69 @@
+name: Tag image
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      distro:
+        required: true
+        type: string
+
+jobs:
+  clean:
+    uses: tracefy/github-actions-workflows/.github/workflows/utilities-clean.yml@v1
+  tag:
+    needs:
+      - clean
+    runs-on: [ self-hosted ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Declare variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Build image for commit
+        if: ${{ inputs.tag == 'latest' }}
+        run: |
+          cp -r config ${{ inputs.distro }}/config
+          cp enable-xdebug.sh ${{ inputs.distro }}/enable-xdebug.sh
+          cd ${{ inputs.distro }}
+          docker build -t ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }} .
+          docker push ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }}
+
+      - name: Pull committed image
+        if: ${{ inputs.tag != 'latest' }}
+        run: docker pull ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }}
+
+      - name: Tag / push image
+        run: |
+          cd ${{ inputs.distro }}
+          docker tag ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ steps.vars.outputs.sha_short }} ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ inputs.tag }}
+          docker push ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ inputs.tag }}
+
+      - name: Tag / push child images
+        if: ${{ inputs.tag != 'latest' }}
+        run: |
+          VAR=${{ inputs.tag }};IFS=".";
+          set -- $VAR;
+          unset IFS;
+          cd ${{ inputs.distro }}
+          docker tag ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ inputs.tag }} ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-$1;
+          docker push ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-$1
+
+          VAR=${{ inputs.tag }};IFS=".";
+          set -- $VAR;unset IFS;
+          docker tag ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-${{ inputs.tag }} ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-$1.$2;
+          docker push ghcr.io/tracefy/${{ github.event.repository.name }}:${{ inputs.distro }}-$1.$2
