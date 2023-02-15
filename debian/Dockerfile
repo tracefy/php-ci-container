@@ -1,5 +1,5 @@
 FROM composer:2 as composer
-FROM php:8.2.2-fpm-bullseye
+FROM php:8.2.3-fpm-bullseye
 
 WORKDIR /app
 
