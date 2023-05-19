@@ -12,7 +12,7 @@ on:
 
 jobs:
   clean:
-    runs-on: ubuntu-latest
+    runs-on: [ X64 ]
     container:
       image: ubuntu:latest
     steps:
