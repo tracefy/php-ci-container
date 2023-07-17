@@ -1,5 +1,5 @@
 FROM composer:2 as composer
-FROM php:8.2.7-fpm-alpine3.17
+FROM php:8.2.8-fpm-alpine3.17
 
 WORKDIR /app
 
